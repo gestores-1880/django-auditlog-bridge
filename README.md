@@ -1,2 +1,106 @@
-# django-auditlog-bridge
-Librería que facilita la creación del histórico de los modelos de Django
+# auditlog-bridge
+Este paquete facilita la generación de los historiales de los modelos de la aplicación proveyendo una interfaz más sencilla para la configuración de los modelos y la generación de los logs.
+Este paquete se basa en el paquete django-auditlog. Más información en https://django-auditlog.readthedocs.io/en/latest/
+
+## Instalación
+1. añadir el paquete django-auditlog en la configuración del proyecto, en INSTALLED_APPS
+```python
+INSTALLED_APPS = [
+    ...
+    'auditlog',
+    ...
+]
+```
+2. aplicar migraciones para crear las tablas necesarias
+```bash
+python manage.py migrate
+```
+3. añadir el middleware en el archivo de configuración de la aplicación
+```python
+MIDDLEWARE = [
+    ...
+    'auditlog_bridge.middleware.AuditlogBridgeMiddleware',
+    ...
+]
+```
+
+## Uso
+1. registrar los modelos que se desean versionar
+```python
+from django.db import models
+
+from auditlog.registry import auditlog
+
+class MyModel(models.Model):
+    pass
+    # Model definition goes here
+
+auditlog.register(MyModel)
+```
+2. en el caso de querer juntar historiales de varios modelos en un solo historial, añadir el método `get_additional_data` en el modelo y referenciar el modelo padre
+```python
+from django.db import models
+
+from auditlog.registry import auditlog
+
+class MyModel(models.Model):
+    def get_additional_data(self):
+        return {
+            'main_model_id': self.id
+        }
+auditlog.register(MyModel)
+
+class MyModelRelated(models.Model):
+    main_model = models.ForeignKey(MyModel, on_delete=models.CASCADE)
+    
+    def get_additional_data(self):
+        return {
+            'main_model_id': self.main_model_id
+        }
+
+auditlog.register(MyModelRelated)
+```
+
+3. Tener en cuenta que tanto el bulk_create como el bulk_update no generan logs, por lo que es necesario hacer forzar el signal del save de cada objeto. Para ello se puede usar el `SignalQuerySet` en el manager del modelo
+```python
+from django.db import models
+
+from auditlog.registry import auditlog
+from auditlog_bridge.queryset import SignalQuerySet
+
+class MyModel(models.Model):
+    objects = SignalQuerySet.as_manager()
+    
+auditlog.register(MyModel)
+
+MyModel.objects.bulk_create_with_signal([MyModel(), MyModel()])
+MyModel.objects.bulk_update_with_signal([MyModel(), MyModel()])
+```
+
+4. La clase `HistoryGenerator` es la encargada de generar los historiales de los modelos. Para ello se debe extender de esta clase y sobreescribir las propiedades `version_instance_generator_by_model` y `version_instance_ordering_by_model`. La primera propiedad debe retornar un diccionario donde la clave es el modelo y el valor es la clase que se encarga de generar la versión del modelo. La segunda propiedad debe retornar un diccionario donde la clave es el modelo y el valor es una lista con los campos por los que se ordenarán las versiones del modelo.
+```python
+class MyModelHistoryGenerator(HistoryGenerator):
+    version_instance_generator_by_model = {
+        MyModel: MyModelVersionInstanceGenerator,
+    }
+    version_instance_ordering_by_model = {
+        MyModel: 1,
+    }
+```
+4.1. La clase `VersionInstanceGenerator` es la encargada de generar las versiones de los modelos. Podemos extender de esta clase y sobreescribir el método `_custom_generator`. Este método recibe como parámetro el `LogEntry`, la `VersionInstance` y el `context`.
+```python
+class MyModelVersionInstanceGenerator(VersionInstanceGenerator):
+    def _custom_generator(self, log: LogEntry, version_instance: VersionInstance, context: dict):
+        pass
+```
+
+5. Y por último, añadir el mixin `AuditLogBridgeMixin` a la clase de la vista que se desee auditar. Este mixin añade una action `history` que se encarga de retornar el historial del modelo. Para configurar la acción hay que añadir las propiedades `history_generator_model`, `history_option` y `history_generator_filter` a la vista.
+```python
+from auditlog_bridge.mixins import AuditLogBridgeMixin
+
+class MyModelView(AuditLogBridgeMixin, View):
+    history_generator_model = MyModelHistoryGenerator
+    history_option = 'GROUPED' # Valores posibles: 'GROUPED', 'FLAT'
+    history_generator_filter = 'my_model_id' # Requerido si history_option es 'GROUPED'
+```
+La url para obtener el historial del modelo es `/<pk>/history/`
