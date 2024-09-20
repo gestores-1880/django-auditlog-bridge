@@ -100,7 +100,7 @@ from auditlog_bridge.mixins import AuditLogBridgeMixin
 
 class MyModelView(AuditLogBridgeMixin, View):
     history_generator_model = MyModelHistoryGenerator
-    history_option = 'GROUPED' # Valores posibles: 'GROUPED', 'FLAT'
+    history_option = 'GROUPED' # Valores posibles: 'GROUPED', 'SINGLE'
     history_generator_filter = 'my_model_id' # Requerido si history_option es 'GROUPED'
 ```
 La url para obtener el historial del modelo es `/<pk>/history/`

@@ -3,12 +3,10 @@ from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from .constants import HISTORY_MODEL_OPTIONS, HISTORY_MODEL_OPTION_GROUPED
 
 
 class AuditLogBridgeMixin:
-    HISTORY_OPTION_ALL = "all"
-    HISTORY_OPTION_ALONE = "alone"
-
     @action(detail=True, methods=["get"], url_path="history")
     def history(self, request, *args, **kwargs):
         self._check_configuration()
@@ -55,12 +53,9 @@ class AuditLogBridgeMixin:
             raise NotImplementedError(
                 "HistoryModelMixin requires a history_option attribute."
             )
-        if self.history_option not in (
-            self.HISTORY_OPTION_ALL,
-            self.HISTORY_OPTION_ALONE,
-        ):
+        if self.history_option not in HISTORY_MODEL_OPTIONS:
             raise ValueError(f"Invalid history_option value: {self.history_option}.")
-        if self.history_option == self.HISTORY_OPTION_ALL and not hasattr(
+        if self.history_option == HISTORY_MODEL_OPTION_GROUPED and not hasattr(
             self, "history_generator_filter"
         ):
             raise NotImplementedError(
