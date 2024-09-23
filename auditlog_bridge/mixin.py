@@ -3,7 +3,8 @@ from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .constants import HISTORY_MODEL_OPTIONS, HISTORY_MODEL_OPTION_GROUPED
+
+from .constants import HISTORY_MODEL_OPTIONS, HISTORY_MODEL_OPTION_GROUPED, HISTORY_MODEL_OPTION_SINGLE
 
 
 class AuditLogBridgeMixin:
@@ -18,22 +19,19 @@ class AuditLogBridgeMixin:
                 .filter(cid__in=page)
                 .order_by("-timestamp")
             )
-            import ipdb
-
-            ipdb.set_trace()
             return self.get_paginated_response(expedient_history)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _get_correlation_ids(self):
         instance = self.get_object()
         filters = {}
-        if self.history_option == self.HISTORY_OPTION_ALONE:
+        if self.history_option == HISTORY_MODEL_OPTION_SINGLE:
             content_type = ContentType.objects.get_for_model(instance)
             filters = {
                 "object_id": instance.id,
                 "content_type": content_type,
             }
-        elif self.history_option == self.HISTORY_OPTION_ALL:
+        elif self.history_option == HISTORY_MODEL_OPTION_GROUPED:
             filters = {f"additional_data__{self.history_generator_filter}": instance.id}
 
         return list(
