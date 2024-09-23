@@ -82,7 +82,7 @@ class HistoryGenerator:
     @classmethod
     def _create_historic_action(
         cls, log_entries: list[LogEntry], context: dict
-    ) -> Union[HistoricAction, None]:
+    ) -> HistoricAction | None:
         """
         Create a historic action from a list of log entries.
         Args:
