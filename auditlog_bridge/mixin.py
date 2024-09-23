@@ -45,11 +45,11 @@ class AuditLogBridgeMixin:
     def _check_configuration(self):
         if not hasattr(self, "history_generator_model"):
             raise NotImplementedError(
-                "HistoryModelMixin requires a history_generator_model attribute."
+                "AuditLogBridgeMixin requires a history_generator_model attribute."
             )
         if not hasattr(self, "history_option"):
             raise NotImplementedError(
-                "HistoryModelMixin requires a history_option attribute."
+                "AuditLogBridgeMixin requires a history_option attribute."
             )
         if self.history_option not in HISTORY_MODEL_OPTIONS:
             raise ValueError(f"Invalid history_option value: {self.history_option}.")
@@ -57,5 +57,5 @@ class AuditLogBridgeMixin:
             self, "history_generator_filter"
         ):
             raise NotImplementedError(
-                "HistoryModelMixin requires a history_generator_filter attribute."
+                "AuditLogBridgeMixin requires a history_generator_filter attribute."
             )
