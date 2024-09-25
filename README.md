@@ -23,6 +23,7 @@ MIDDLEWARE = [
     ...
 ]
 ```
+Este middleware se encarga de setear el correlation id en la request para poder identificar y agrupar los logs de una misma petición.
 
 ## Uso
 1. registrar los modelos que se desean versionar

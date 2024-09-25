@@ -5,9 +5,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .constants import HISTORY_MODEL_OPTIONS, HISTORY_MODEL_OPTION_GROUPED, HISTORY_MODEL_OPTION_SINGLE
+from .history_generator import HistoryGenerator
 
 
 class AuditLogBridgeMixin:
+    history_option = HISTORY_MODEL_OPTION_SINGLE
+
     @action(detail=True, methods=["get"], url_path="history")
     def history(self, request, *args, **kwargs):
         self._check_configuration()
@@ -17,10 +20,14 @@ class AuditLogBridgeMixin:
             expedient_history = self.history_generator_model().generate(
                 logs=LogEntry.objects.select_related("actor")
                 .filter(cid__in=page)
-                .order_by("-timestamp")
+                .order_by("-timestamp"),
+                context=self._get_auditlog_bridge_context(),
             )
             return self.get_paginated_response(expedient_history)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _get_auditlog_bridge_context(self):
+        return {}
 
     def _get_correlation_ids(self):
         instance = self.get_object()
@@ -43,18 +50,19 @@ class AuditLogBridgeMixin:
         )
 
     def _check_configuration(self):
+
         if not hasattr(self, "history_generator_model"):
             raise NotImplementedError(
                 "AuditLogBridgeMixin requires a history_generator_model attribute."
             )
-        if not hasattr(self, "history_option"):
-            raise NotImplementedError(
-                "AuditLogBridgeMixin requires a history_option attribute."
+        if not isinstance(self.history_generator_model, HistoryGenerator):
+            raise ValueError(
+                "history_generator_model must be an instance of HistoryGenerator."
             )
         if self.history_option not in HISTORY_MODEL_OPTIONS:
             raise ValueError(f"Invalid history_option value: {self.history_option}.")
         if self.history_option == HISTORY_MODEL_OPTION_GROUPED and not hasattr(
-            self, "history_generator_filter"
+                self, "history_generator_filter"
         ):
             raise NotImplementedError(
                 "AuditLogBridgeMixin requires a history_generator_filter attribute."

@@ -75,26 +75,3 @@ class HistoricAction:
             "instances": [instance.serialize() for instance in self.instances],
             "created": self.created,
         }
-
-    @classmethod
-    def create(
-        cls,
-        log_entries: list[LogEntry],
-        version_instance_generator_by_model: dict,
-        version_instance_generator_default: object,
-        **kwargs,
-    ) -> HistoricAction | None:
-        if not log_entries:
-            return None
-        author = cls._get_author(log_entries)
-        action = cls(author=author, date_created=log_entries[0].timestamp)
-        for log in log_entries:
-            version_instance_generator = version_instance_generator_by_model.get(
-                log.content_type.model_class(), version_instance_generator_default
-            )
-            action.instances.append(
-                version_instance_generator.generate(log=log, **kwargs)
-            )
-            if log.action == LogEntry.Action.CREATE:
-                action.created = True
-        return action

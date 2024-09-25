@@ -28,6 +28,7 @@ class HistoryGenerator:
         Returns:
             list: A list of serialized historic actions.
         """
+        cls._check_configuration()
         historic_actions = cls._get_historic_actions(
             logs=logs,
             context=context,
@@ -138,3 +139,13 @@ class HistoryGenerator:
                         joined_instance.fields.append(field)
             action.instances.append(joined_instance)
         return action
+
+    @classmethod
+    def _check_configuration(cls):
+        version_instance_generators = cls.version_instance_generator_by_model.values()
+        for version_instance_generator in version_instance_generators:
+            if not issubclass(version_instance_generator, VersionInstanceGenerator):
+                raise ValueError(
+                    f"{version_instance_generator} must be subclasses of VersionInstanceGenerator."
+                )
+
