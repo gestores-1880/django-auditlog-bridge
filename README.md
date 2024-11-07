@@ -105,3 +105,16 @@ class MyModelView(AuditLogBridgeMixin, View):
     history_generator_filter = 'my_model_id' # Requerido si history_option es 'GROUPED'
 ```
 La url para obtener el historial del modelo es `/<pk>/history/`
+
+## Issues
+
+### Instance duplication
+
+If you are duplication a django model instance, removing the `id` field and saving it again, the auditlog think you are updating the instance and not creating a new one. To avoid this, fix the _state of the instance to be saved.
+
+```python
+instance = MyModel.objects.get(pk=1)
+instance.pk = None
+instance._state.adding = True
+instance.save()
+```
