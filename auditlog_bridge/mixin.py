@@ -55,7 +55,7 @@ class AuditLogBridgeMixin:
             raise NotImplementedError(
                 "AuditLogBridgeMixin requires a history_generator_model attribute."
             )
-        if not isinstance(self.history_generator_model, HistoryGenerator):
+        if not issubclass(self.history_generator_model, HistoryGenerator):
             raise ValueError(
                 "history_generator_model must be an instance of HistoryGenerator."
             )
