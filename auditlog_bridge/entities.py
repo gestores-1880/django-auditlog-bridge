@@ -3,10 +3,8 @@ from __future__ import annotations
 import datetime
 from dataclasses import dataclass, field
 
-from auditlog.models import LogEntry
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-
 
 UserModel = get_user_model()
 
