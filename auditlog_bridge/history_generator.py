@@ -48,10 +48,10 @@ class HistoryGenerator:
         if context is None:
             context = {}
         logs_by_cid = OrderedDict()
-        for log in logs:
+        for log in reversed(logs):
             logs_by_cid.setdefault(log.cid, []).append(log)
         historic_actions = []
-        for logs in logs_by_cid.values():
+        for logs in reversed(logs_by_cid.values()):
             historic_actions.append(
                 cls._create_historic_action(
                     log_entries=logs,
