@@ -77,8 +77,26 @@ auditlog.register(MyModel)
 MyModel.objects.bulk_create_with_signal([MyModel(), MyModel()])
 MyModel.objects.bulk_update_with_signal([MyModel(), MyModel()])
 ```
+También se puede usar el `CelerySignalQuerySet` en el queryset del modelo en caso de que se esté usando Celery. El `CelerySignalQuerySet` es una extensión del `SignalQuerySet` que añade la funcionalidad `bulk_create_with_async_auditlog` que permite crear los logs de forma asíncrona.
+```python
+    
+from django.db import models
+from auditlog.registry import auditlog
+from auditlog_bridge.celery import CelerySignalQueryset
+class MyModel(models.Model):
+    objects = CelerySignalQueryset.as_manager()
+auditlog.register(MyModel)
 
-4. La clase `HistoryGenerator` es la encargada de generar los historiales de los modelos. Para ello se debe extender de esta clase y sobreescribir las propiedades `version_instance_generator_by_model` y `version_instance_ordering_by_model`. La primera propiedad debe retornar un diccionario donde la clave es el modelo y el valor es la clase que se encarga de generar la versión del modelo. La segunda propiedad debe retornar un diccionario donde la clave es el modelo y el valor es una lista con los campos por los que se ordenarán las versiones del modelo.
+MyModel.objects.bulk_create_with_signal([MyModel(), MyModel()])
+MyModel.objects.bulk_update_with_signal([MyModel(), MyModel()])
+MyModel.objects.bulk_create_with_async_auditlog([MyModel(), MyModel()])
+
+```
+
+4. La clase `HistoryGenerator` es la encargada de generar los historiales de los modelos. Para ello se debe extender de esta clase y sobreescribir las propiedades `version_instance_generator_by_model`, `version_instance_ordering_by_model` y `main_model`. 
+   1. La propiedad `version_instance_generator_by_model` debe retornar un diccionario donde la clave es el modelo y el valor es la clase que se encarga de generar la versión del modelo. 
+   2. La propiedad `version_instance_ordering_by_model` debe retornar un diccionario donde la clave es el modelo y el valor es una lista con los campos por los que se ordenarán las versiones del modelo.
+   3. La propiedad `main_model` debe retornar el modelo principal en caso de que se desee agrupar los historiales de varios modelos. En caso de no querer agrupar los historiales, se puede omitir esta propiedad.
 ```python
 class MyModelHistoryGenerator(HistoryGenerator):
     version_instance_generator_by_model = {
@@ -87,6 +105,7 @@ class MyModelHistoryGenerator(HistoryGenerator):
     version_instance_ordering_by_model = {
         MyModel: 1,
     }
+    main_model = MyModel
 ```
 4.1. La clase `VersionInstanceGenerator` es la encargada de generar las versiones de los modelos. Podemos extender de esta clase y sobreescribir el método `_custom_generator`. Este método recibe como parámetro el `LogEntry`, la `VersionInstance` y el `context`.
 ```python
@@ -103,6 +122,7 @@ class MyModelView(AuditLogBridgeMixin, View):
     history_generator_model = MyModelHistoryGenerator
     history_option = 'GROUPED' # Valores posibles: 'GROUPED', 'SINGLE'
     history_generator_filter = 'my_model_id' # Requerido si history_option es 'GROUPED'
+    exclude_cid_starting_with = 'exclude_cids' # Opcional, si se desea excluir los logs que empiezan con un cid determinado
 ```
 La url para obtener el historial del modelo es `/<pk>/history/`
 
