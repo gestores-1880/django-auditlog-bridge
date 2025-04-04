@@ -107,7 +107,7 @@ class MyModelHistoryGenerator(HistoryGenerator):
     }
     main_model = MyModel
 ```
-4.1. La clase `VersionInstanceGenerator` es la encargada de generar las versiones de los modelos. Podemos extender de esta clase y sobreescribir el método `_custom_generator`. Este método recibe como parámetro el `LogEntry`, la `VersionInstance` y el `context`.
+La clase `VersionInstanceGenerator` es la encargada de generar las versiones de los modelos. Podemos extender de esta clase y sobreescribir el método `_custom_generator`. Este método recibe como parámetro el `LogEntry`, la `VersionInstance` y el `context`.
 ```python
 class MyModelVersionInstanceGenerator(VersionInstanceGenerator):
     def _custom_generator(self, log: LogEntry, version_instance: VersionInstance, context: dict):
