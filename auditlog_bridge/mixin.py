@@ -1,5 +1,6 @@
 from auditlog.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Min, Case, When
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,16 +17,17 @@ class AuditLogBridgeMixin:
     def history(self, request, *args, **kwargs):
         self._check_configuration()
         correlation_ids = self._get_correlation_ids()
-        page = self.paginate_queryset(correlation_ids)
-        if page is not None:
+        cids_in_page = self.paginate_queryset(correlation_ids)
+        if cids_in_page is not None:
             filters = {
-                "cid__in": page,
+                "cid__in": cids_in_page,
                 **self._get_filters(),
             }
+            ordering = Case(*[When(cid=cid, then=pos) for pos, cid in enumerate(cids_in_page)])
             expedient_history = self.history_generator_model().generate(
                 logs=LogEntry.objects.select_related("actor")
                 .filter(**filters)
-                .order_by("-timestamp"),
+                .order_by(ordering),
                 context=self._get_auditlog_bridge_context(),
             )
             return self.get_paginated_response(expedient_history)
@@ -42,11 +44,9 @@ class AuditLogBridgeMixin:
             logentry_qs = logentry_qs.exclude(cid__startswith=self.exclude_cid_starting_with)
 
         return list(
-            dict.fromkeys(
-                logentry_qs
-                .order_by("-timestamp")
-                .values_list("cid", flat=True)
-            )
+            logentry_qs.values('cid').annotate(
+                min_timestamp=Min('timestamp')
+            ).order_by('-min_timestamp').values_list('cid', flat=True)
         )
 
     def _get_filters(self):
