@@ -84,6 +84,7 @@ class HistoryGenerator:
         for log in log_entries:
             if log.content_type.model_class() == cls.main_model:
                 return log.action == LogEntry.Action.CREATE
+        return False
 
     @classmethod
     def _create_historic_action(
