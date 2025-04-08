@@ -20,7 +20,11 @@ class VersionInstanceGenerator:
     @classmethod
     def _get_version_instance(cls, log: LogEntry):
         fields = []
-        m2m_fields = len(log.changes) == 1 and list(log.changes.values())[0].get("type") == "m2m"
+        m2m_fields = (
+                len(log.changes) == 1
+                and isinstance(list(log.changes.values())[0], dict)
+                and list(log.changes.values())[0].get("type") == "m2m"
+        )
         if m2m_fields:
             added = False
             for field_name, value in log.changes.items():
