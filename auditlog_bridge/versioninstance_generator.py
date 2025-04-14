@@ -20,23 +20,58 @@ class VersionInstanceGenerator:
     @classmethod
     def _get_version_instance(cls, log: LogEntry):
         fields = []
-        for field_name, values in log.changes_display_dict.items():
-            normalized_field_name = field_name.lower().replace(" ", "_")
-            if normalized_field_name in cls.excluded_fields:
-                continue
-            fields.append(
-                VersionField(
-                    field_name=normalized_field_name,
-                    old_value=cls._clean_none_values(values[0]),
-                    new_value=cls._clean_none_values(values[1]),
-                )
-            )
-        return VersionInstance(
-            content_type=log.content_type,
-            instance_id=log.object_id,
-            action=log.get_action_display(),
-            fields=fields,
+        m2m_fields = (
+                len(log.changes) == 1
+                and isinstance(list(log.changes.values())[0], dict)
+                and list(log.changes.values())[0].get("type") == "m2m"
         )
+        if m2m_fields:
+            added = False
+            for field_name, value in log.changes.items():
+                field_name = field_name.lower().replace(" ", "_")
+                if field_name in cls.excluded_fields:
+                    continue
+                if value["operation"] == "add":
+                    added = True
+                    fields.append(
+                        VersionField(
+                            field_name=field_name,
+                            old_value=None,
+                            new_value=value["objects"],
+                        )
+                    )
+                elif value["operation"] == "delete":
+                    fields.append(
+                        VersionField(
+                            field_name=field_name,
+                            old_value=value["objects"],
+                            new_value=None,
+                        )
+                    )
+            return VersionInstance(
+                content_type=log.content_type,
+                instance_id=log.object_id,
+                action=VersionInstance.CREATE if added else VersionInstance.DELETE,
+                fields=fields,
+            )
+        else:
+            for field_name, values in log.changes_display_dict.items():
+                normalized_field_name = field_name.lower().replace(" ", "_")
+                if normalized_field_name in cls.excluded_fields:
+                    continue
+                fields.append(
+                    VersionField(
+                        field_name=normalized_field_name,
+                        old_value=cls._clean_none_values(values[0]),
+                        new_value=cls._clean_none_values(values[1]),
+                    )
+                )
+            return VersionInstance(
+                content_type=log.content_type,
+                instance_id=log.object_id,
+                action=log.get_action_display(),
+                fields=fields,
+            )
 
     @classmethod
     def _set_deleted_instance(cls, instance: VersionInstance) -> VersionInstance:

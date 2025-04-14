@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from typing import Union
 
 from auditlog.models import LogEntry
@@ -11,6 +11,7 @@ class HistoryGenerator:
     version_instance_generator_by_model = {}
     version_instance_generator_default = VersionInstanceGenerator
     version_instance_ordering_by_model = {}
+    main_model = None
 
     @classmethod
     def generate(
@@ -46,9 +47,9 @@ class HistoryGenerator:
     ) -> list[HistoricAction]:
         if context is None:
             context = {}
-        logs_by_cid = defaultdict(list)
+        logs_by_cid = OrderedDict()
         for log in logs:
-            logs_by_cid[log.cid].append(log)
+            logs_by_cid.setdefault(log.cid, []).append(log)
         historic_actions = []
         for logs in logs_by_cid.values():
             historic_actions.append(
@@ -78,7 +79,12 @@ class HistoryGenerator:
 
     @classmethod
     def _action_created(cls, log_entries: list[LogEntry]) -> bool:
-        return log_entries[0].action == LogEntry.Action.CREATE
+        if cls.main_model is None:
+            return log_entries[0].action == LogEntry.Action.CREATE
+        for log in log_entries:
+            if log.content_type.model_class() == cls.main_model:
+                return log.action == LogEntry.Action.CREATE
+        return False
 
     @classmethod
     def _create_historic_action(
@@ -96,7 +102,7 @@ class HistoryGenerator:
             return None
         action = HistoricAction(
             author=cls._get_author_name(log_entries=log_entries),
-            date_created=log_entries[0].timestamp,
+            date_created=log_entries[-1].timestamp,
             created=cls._action_created(log_entries=log_entries),
         )
         for log in log_entries:
