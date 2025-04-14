@@ -81,10 +81,11 @@ class HistoryGenerator:
     def _action_created(cls, log_entries: list[LogEntry]) -> bool:
         if cls.main_model is None:
             return log_entries[0].action == LogEntry.Action.CREATE
+        action_created = False
         for log in log_entries:
             if log.content_type.model_class() == cls.main_model:
-                return log.action == LogEntry.Action.CREATE
-        return False
+                action_created |= log.action == LogEntry.Action.CREATE
+        return action_created
 
     @classmethod
     def _create_historic_action(
