@@ -138,6 +138,9 @@ class HistoryGenerator:
                 continue
             joined_instance = instances[0]
             for instance in instances[1:]:
+                if not instance.allow_join:
+                    action.instances.append(instance)
+                    continue
                 field_names = {field.field_name for field in joined_instance.fields}
                 for field in instance.fields:
                     if field.field_name in field_names:
