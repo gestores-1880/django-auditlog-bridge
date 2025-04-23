@@ -53,6 +53,7 @@ class VersionInstanceGenerator:
                 instance_id=log.object_id,
                 action=VersionInstance.CREATE if added else VersionInstance.DELETE,
                 fields=fields,
+                allow_join=False,
             )
         else:
             for field_name, values in log.changes_display_dict.items():
