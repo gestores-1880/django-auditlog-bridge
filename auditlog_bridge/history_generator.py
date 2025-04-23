@@ -133,14 +133,13 @@ class HistoryGenerator:
             ].append(instance)
         action.instances = []
         for instances in instances_by_content_type.values():
-            if not instances[0].allow_join:
-                action.instances.extend(instances)
+            joinables = [inst for inst in instances if inst.allow_join]
+            non_joinables = [inst for inst in instances if not inst.allow_join]
+            action.instances.extend(non_joinables)
+            if len(joinables) == 0:
                 continue
-            joined_instance = instances[0]
+            joined_instance = joinables[0]
             for instance in instances[1:]:
-                if not instance.allow_join:
-                    action.instances.append(instance)
-                    continue
                 field_names = {field.field_name for field in joined_instance.fields}
                 for field in instance.fields:
                     if field.field_name in field_names:
