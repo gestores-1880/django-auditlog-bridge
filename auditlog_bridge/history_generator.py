@@ -136,7 +136,7 @@ class HistoryGenerator:
             joinables = [inst for inst in instances if inst.allow_join]
             non_joinables = [inst for inst in instances if not inst.allow_join]
             action.instances.extend(non_joinables)
-            if len(joinables) == 0:
+            if not joinables:
                 continue
             joined_instance = joinables[0]
             for instance in joinables[1:]:
