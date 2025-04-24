@@ -42,6 +42,7 @@ class VersionInstance:
     instance_id: int | None = None
     fields: list[VersionField] = field(default_factory=list)
     representation: str | None = None
+    allow_join: bool = True
 
     def serialize(self):
         return {
