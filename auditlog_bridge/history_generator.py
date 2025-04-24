@@ -139,7 +139,7 @@ class HistoryGenerator:
             if len(joinables) == 0:
                 continue
             joined_instance = joinables[0]
-            for instance in instances[1:]:
+            for instance in joinables[1:]:
                 field_names = {field.field_name for field in joined_instance.fields}
                 for field in instance.fields:
                     if field.field_name in field_names:
