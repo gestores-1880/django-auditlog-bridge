@@ -116,7 +116,7 @@ class MyModelVersionInstanceGenerator(VersionInstanceGenerator):
 
 5. Y por último, añadir el mixin `AuditLogBridgeMixin` a la clase de la vista que se desee auditar. Este mixin añade una action `history` que se encarga de retornar el historial del modelo. Para configurar la acción hay que añadir las propiedades `history_generator_model`, `history_option` y `history_generator_filter` a la vista.
 ```python
-from auditlog_bridge.mixins import AuditLogBridgeMixin
+from auditlog_bridge.mixin import AuditLogBridgeMixin
 
 class MyModelView(AuditLogBridgeMixin, View):
     history_generator_model = MyModelHistoryGenerator

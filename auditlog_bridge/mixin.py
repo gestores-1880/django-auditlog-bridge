@@ -61,7 +61,7 @@ class AuditLogBridgeMixin:
         
         if self.history_option == HISTORY_MODEL_OPTION_GROUPED:
             filter_key = f"additional_data__{self.history_generator_filter}"
-            grouped_filter_component = Q(**{filter_key: instance.id})
+            grouped_filter_component = Q(**{filter_key: str(instance.id)})
             return grouped_filter_component | object_filter_component
         
         return Q()
