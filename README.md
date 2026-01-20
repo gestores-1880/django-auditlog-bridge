@@ -25,6 +25,28 @@ MIDDLEWARE = [
 ```
 Este middleware se encarga de setear el correlation id en la request para poder identificar y agrupar los logs de una misma petición.
 
+
+4. Opcionalmente, puedes usar el middleware AuditlogBridgeCorrelationIdHeaderMiddleware si quieres que el correlation id se encuentre en el header X-Correlation-ID para relacionar las acciones de varias requests.
+```python
+MIDDLEWARE = [
+    ...
+    'auditlog_bridge.middleware.AuditlogBridgeCorrelationIdHeaderMiddleware',
+    ...
+]
+```
+En el caso de usar este middleware, si usas django-cors-headers en tu proyecto, tienes que añadir esta config en tu settings.py para que funcione correctamente.
+```python
+CORS_EXPOSE_HEADERS = ("x-correlation-id",)
+CORS_ALLOW_HEADERS = (
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "x-correlation-id",
+)
+```
 ## Uso
 1. registrar los modelos que se desean versionar
 ```python
