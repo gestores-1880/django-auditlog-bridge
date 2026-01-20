@@ -5,7 +5,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name="django-auditlog-bridge",
-    version="1.1.4",
+    version="1.1.5",
     packages=find_packages(),
     python_requires=">=3.10",
     include_package_data=True,
