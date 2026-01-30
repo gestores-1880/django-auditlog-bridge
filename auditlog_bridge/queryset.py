@@ -12,6 +12,7 @@ class SignalQuerySet(QuerySet):
             post_save.send(
                 sender=instance.__class__, instance=instance, created=True, using=None
             )
+        return created_instances
 
     def bulk_update_with_signal(self, instances: list, fields: list, batch_size=None):
         """
