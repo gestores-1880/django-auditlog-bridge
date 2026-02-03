@@ -15,7 +15,7 @@ class SignalQuerySet(QuerySet):
 
     def bulk_update_with_signal(self, instances: list, fields: list, batch_size=None):
         """
-        Bulk update instances and send post_save signal for each instance
+        Bulk update instances and send pre_save signal for each instance
         """
         for instance in instances:
             pre_save.send(
