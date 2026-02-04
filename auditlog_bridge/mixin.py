@@ -1,6 +1,7 @@
 from auditlog.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Min, Case, When, Q
+from django.http import HttpRequest, HttpResponse
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -84,3 +85,35 @@ class AuditLogBridgeMixin:
             raise NotImplementedError(
                 "AuditLogBridgeMixin requires a history_generator_filter attribute."
             )
+
+
+class AuditlogBridgeJWTAuthViewMixin:
+    """
+    Mixin for views that sets auditlog actor context for JWT-authenticated requests.
+
+    This mixin is used when JWT authentication is configured in DRF, where the
+    standard auditlog middleware cannot capture the authenticated user because
+    JWT authentication happens after middleware processing.
+
+    Usage:
+        class MyView(AuditlogBridgeJWTAuthViewMixin, APIView):
+            ...
+    """
+
+    def dispatch(
+        self,
+        request: HttpRequest,
+        *args,
+        **kwargs,
+    ) -> HttpResponse:
+        """
+        Dispatch the request with auditlog actor context set.
+
+        Extracts the actor and remote address from the request and sets them
+        in the auditlog context before dispatching to the parent view.
+        """
+        remote_addr = AuditlogMiddleware._get_remote_addr(request)  # noqa: SLF001
+        actor = AuditlogMiddleware._get_actor(request)  # noqa: SLF001
+
+        with set_actor(actor=actor, remote_addr=remote_addr):
+            return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
