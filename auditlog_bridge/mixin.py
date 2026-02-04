@@ -100,20 +100,12 @@ class AuditlogBridgeJWTAuthViewMixin:
             ...
     """
 
-    def dispatch(
-        self,
-        request: HttpRequest,
-        *args,
-        **kwargs,
-    ) -> HttpResponse:
+    def initial(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
         """
-        Dispatch the request with auditlog actor context set.
-
-        Extracts the actor and remote address from the request and sets them
-        in the auditlog context before dispatching to the parent view.
+        Initialize the view with auditlog actor context set.
         """
-        remote_addr = AuditlogMiddleware._get_remote_addr(request)  # noqa: SLF001
-        actor = AuditlogMiddleware._get_actor(request)  # noqa: SLF001
+        super().initial(request, *args, **kwargs)  # type: ignore[misc]
 
-        with set_actor(actor=actor, remote_addr=remote_addr):
-            return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
+        context = auditlog_value.get()
+        context["actor"] = AuditlogMiddleware._get_actor(request)
+        auditlog_value.set(context)
