@@ -3,7 +3,7 @@ import typing
 import uuid
 
 from auditlog.cid import correlation_id, get_cid
-from auditlog.context import set_actor
+from auditlog.context import set_actor, disable_auditlog
 from auditlog.middleware import AuditlogMiddleware
 from django.conf import settings
 from django.core import signing
@@ -40,10 +40,16 @@ class AuditlogBridgeCorrelationIdHeaderMiddleware(AuditlogBridgeMiddleware):
         remote_addr = self._get_remote_addr(request)
         user = self._get_actor(request)
         self._set_cid(request)
-        with set_actor(actor=user, remote_addr=remote_addr):
-            response = self.get_response(request)
-            response[settings.AUDITLOG_CID_HEADER] = self.signer.sign(get_cid())
-            return response
+
+        if settings.REGISTER_ADMIN_LOGS and request.path.lstrip("/").startswith(settings.ADMIN_URL):
+            with disable_auditlog():
+                response = self.get_response(request)
+        else:
+            with set_actor(actor=user, remote_addr=remote_addr):
+                response = self.get_response(request)
+
+        response[settings.AUDITLOG_CID_HEADER] = self.signer.sign(get_cid())
+        return response
 
     def _set_cid(self, request: WSGIRequest) -> None:
         header = settings.AUDITLOG_CID_HEADER
