@@ -148,6 +148,26 @@ class MyModelView(AuditLogBridgeMixin, View):
 ```
 La url para obtener el historial del modelo es `/<pk>/history/`
 
+## JWT Authentication Compatibility
+
+### AuditlogBridgeJWTAuthViewMixin
+
+Para compatibilidad con autenticación JWT, puedes usar el mixin `AuditlogBridgeJWTAuthViewMixin` en tus vistas. Este mixin extiende la funcionalidad de `AuditLogBridgeMixin` para trabajar correctamente con autenticación basada en JWT, asegurando que el historial de acciones se asocie al usuario autenticado por el token JWT.
+
+#### Ejemplo de uso
+```python
+from auditlog_bridge.mixin import AuditlogBridgeJWTAuthViewMixin
+
+class MyModelJWTView(AuditlogBridgeJWTAuthViewMixin, View):
+    history_generator_model = MyModelHistoryGenerator
+    history_option = 'GROUPED' # Valores posibles: 'GROUPED', 'SINGLE'
+    history_generator_filter = 'my_model_id' # Requerido si history_option es 'GROUPED'
+```
+
+Este mixin es útil cuando tu proyecto utiliza autenticación JWT (por ejemplo, con paquetes como `djangorestframework-simplejwt`). El mixin se encarga de extraer el usuario del token JWT y asociarlo correctamente en los logs generados por auditlog-bridge.
+
+Asegúrate de que tu configuración de autenticación en Django esté correctamente definida para JWT y que el usuario esté disponible en la request.
+
 ## Issues
 
 ### Instance duplication
