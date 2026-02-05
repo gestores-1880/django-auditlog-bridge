@@ -1,4 +1,5 @@
 from auditlog.models import LogEntry
+from auditlog.context import auditlog_value
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Min, Case, When, Q
 from django.http import HttpRequest, HttpResponse
