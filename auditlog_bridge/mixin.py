@@ -1,5 +1,6 @@
 from auditlog.models import LogEntry
 from auditlog.context import auditlog_value
+from auditlog.middleware import AuditlogMiddleware
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Min, Case, When, Q
 from django.http import HttpRequest, HttpResponse
@@ -9,6 +10,7 @@ from rest_framework.response import Response
 
 from .constants import HISTORY_MODEL_OPTIONS, HISTORY_MODEL_OPTION_GROUPED, HISTORY_MODEL_OPTION_SINGLE
 from .history_generator import HistoryGenerator
+
 
 
 class AuditLogBridgeMixin:
