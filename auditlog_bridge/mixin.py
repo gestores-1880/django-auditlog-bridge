@@ -12,7 +12,6 @@ from .constants import HISTORY_MODEL_OPTIONS, HISTORY_MODEL_OPTION_GROUPED, HIST
 from .history_generator import HistoryGenerator
 
 
-
 class AuditLogBridgeMixin:
     history_option = HISTORY_MODEL_OPTION_SINGLE
     exclude_cid_starting_with = None
